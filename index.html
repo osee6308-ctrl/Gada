@@ -15,28 +15,24 @@
   html, body { height:100%; overflow:hidden; background:#000; color:#fff; }
   body { display:flex; flex-direction:column; }
 
-  .feed {
-    flex:1; overflow-y:scroll; scroll-snap-type: y mandatory;
-    -webkit-overflow-scrolling: touch; padding-bottom: 70px;
-  }
+  .feed { flex:1; overflow-y:scroll; scroll-snap-type: y mandatory; -webkit-overflow-scrolling: touch; padding-bottom: 70px; }
   .feed::-webkit-scrollbar { display:none; }
 
   .clip {
-    height: calc(100vh - 70px);
-    scroll-snap-align: start;
+    height: calc(100vh - 70px); scroll-snap-align: start;
     display:flex; flex-direction:column; justify-content:flex-end;
     position:relative; background:#000; padding:20px 16px 30px; overflow:hidden;
   }
   .clip-bg { position:absolute; inset:0; background-size:cover; background-position:center; z-index:0; }
   .clip-bg::after { content:''; position:absolute; inset:0; background:linear-gradient(180deg, rgba(0,0,0,.15) 0%, rgba(0,0,0,.05) 40%, rgba(0,0,0,.85) 100%); }
   .clip-content { position:relative; z-index:2; max-width:75%; }
-  .clip-user { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+  .clip-user { display:flex; align-items:center; gap:10px; margin-bottom:8px; cursor:pointer; }
   .clip-avatar {
     width:42px; height:42px; border-radius:50%;
     background:linear-gradient(135deg,#6a3093,#1e3c72);
     display:flex; align-items:center; justify-content:center;
     font-weight:900; font-size:16px; color:#fff; border:2px solid #fff;
-    position:relative;
+    position:relative; flex-shrink:0;
   }
   .clip-avatar.verified::after {
     content:'✓'; position:absolute; bottom:-2px; right:-2px;
@@ -66,6 +62,8 @@
   .act .ic { font-size:30px; line-height:1; filter: drop-shadow(0 2px 6px rgba(0,0,0,.6)); }
   .act.liked .ic { filter: drop-shadow(0 0 8px #ff4757); }
   .act.tip .ic { font-size:26px; }
+  .act.report .ic { font-size:24px; }
+  .act.chat .ic { font-size:26px; }
 
   .nav {
     position:fixed; bottom:0; left:0; right:0;
@@ -78,6 +76,7 @@
     flex:1; background:transparent; border:none; color:#888;
     display:flex; flex-direction:column; align-items:center; justify-content:center;
     gap:3px; font-size:10.5px; font-weight:700; cursor:pointer;
+    position:relative;
   }
   .nav-btn .ni { font-size:22px; }
   .nav-btn.active { color:#fff; }
@@ -86,24 +85,22 @@
     background:#fff; color:#000; width:42px; height:30px; border-radius:8px;
     display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:900;
   }
-
-  .sheet {
-    position:fixed; inset:0; background:rgba(0,0,0,.85);
-    z-index:200; display:none; align-items:flex-end;
+  .nav-badge {
+    position:absolute; top:6px; right:calc(50% - 20px);
+    background:#ff4757; color:#fff; font-size:9px; font-weight:800;
+    min-width:16px; height:16px; padding:0 4px; border-radius:20px;
+    display:flex; align-items:center; justify-content:center;
   }
+
+  .sheet { position:fixed; inset:0; background:rgba(0,0,0,.85); z-index:200; display:none; align-items:flex-end; }
   .sheet.open { display:flex; }
   .sheet-body {
     width:100%; background:#111; border-top-left-radius:20px; border-top-right-radius:20px;
-    padding:20px; padding-bottom: calc(20px + env(safe-area-inset-bottom));
-    max-height:85vh; overflow-y:auto;
+    padding:20px; padding-bottom: calc(20px + env(safe-area-inset-bottom)); max-height:85vh; overflow-y:auto;
   }
   .sheet-title { font-weight:900; font-size:16px; margin-bottom:14px; display:flex; justify-content:space-between; align-items:center; }
   .sheet-close { background:transparent; border:none; color:#fff; font-size:22px; cursor:pointer; }
-  .sheet textarea {
-    width:100%; min-height:80px; background:#1a1a1a; border:1px solid #333;
-    color:#fff; border-radius:12px; padding:12px; font-size:14px;
-    font-family:inherit; resize:none; outline:none;
-  }
+  .sheet textarea { width:100%; min-height:80px; background:#1a1a1a; border:1px solid #333; color:#fff; border-radius:12px; padding:12px; font-size:14px; font-family:inherit; resize:none; outline:none; }
   .sheet input[type=file] { display:none; }
   .upload-btn {
     display:flex; align-items:center; justify-content:center; gap:8px;
@@ -112,49 +109,119 @@
     color:#aaa; font-size:13.5px; cursor:pointer;
   }
   .upload-btn.has-image { background:#0d2818; border-color:#4caf50; color:#8bc34a; }
-  .toggle-row {
-    display:flex; align-items:center; justify-content:space-between;
-    padding:12px 14px; margin-top:10px;
-    background:#1a1a1a; border-radius:12px; font-size:13.5px;
-  }
+  .toggle-row { display:flex; align-items:center; justify-content:space-between; padding:12px 14px; margin-top:10px; background:#1a1a1a; border-radius:12px; font-size:13.5px; }
   .toggle-row input { width:20px; height:20px; accent-color:#6a3093; }
-  .submit-btn {
-    width:100%; padding:15px; margin-top:14px;
-    background:#6a3093; border:none; color:#fff;
-    border-radius:12px; font-size:15px; font-weight:800; cursor:pointer;
-  }
+  .submit-btn { width:100%; padding:15px; margin-top:14px; background:#6a3093; border:none; color:#fff; border-radius:12px; font-size:15px; font-weight:800; cursor:pointer; }
 
   .empty-state {
-    height: calc(100vh - 70px);
-    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    height: calc(100vh - 70px); display:flex; flex-direction:column; align-items:center; justify-content:center;
     padding:40px; text-align:center; gap:14px; scroll-snap-align: start;
   }
   .empty-state .eicon { font-size:60px; opacity:.4; }
   .empty-state h2 { font-size:18px; font-weight:800; }
   .empty-state p { font-size:13.5px; opacity:.65; line-height:1.6; }
-  .empty-state button {
-    margin-top:10px; padding:12px 24px; background:#6a3093;
-    border:none; color:#fff; border-radius:12px; font-weight:800; font-size:14px; cursor:pointer;
-  }
+  .empty-state button { margin-top:10px; padding:12px 24px; background:#6a3093; border:none; color:#fff; border-radius:12px; font-weight:800; font-size:14px; cursor:pointer; }
 
-  .toast {
-    position:fixed; bottom:90px; left:50%; transform:translateX(-50%) translateY(20px);
-    background:#222; color:#fff; padding:10px 18px; border-radius:20px;
-    font-size:13px; font-weight:700; opacity:0;
-    transition: all .3s; pointer-events:none; z-index:300;
-  }
+  .toast { position:fixed; bottom:90px; left:50%; transform:translateX(-50%) translateY(20px); background:#222; color:#fff; padding:10px 18px; border-radius:20px; font-size:13px; font-weight:700; opacity:0; transition: all .3s; pointer-events:none; z-index:300; }
   .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
 
-  /* ─── AD SLOT (empty now, ready for AdMob) ─── */
-  .ad-slot {
-    height: 0;
-    overflow: hidden;
-    background: #0a0a0a;
-    text-align: center;
-    transition: height .3s;
+  .report-menu { position:fixed; inset:0; background:rgba(0,0,0,.85); z-index:250; display:none; align-items:center; justify-content:center; padding:20px; }
+  .report-menu.open { display:flex; }
+  .report-card { background:#181818; border-radius:16px; padding:20px; width:100%; max-width:400px; }
+  .report-card h3 { font-size:16px; margin-bottom:14px; color:#fff; font-weight:800; }
+  .report-reason { display:block; width:100%; padding:14px 16px; margin-bottom:8px; background:#1a1a1a; border:1px solid #333; border-radius:10px; color:#fff; font-size:14px; text-align:left; cursor:pointer; }
+  .report-reason:active { background:#6a3093; }
+  .report-cancel { display:block; width:100%; padding:14px; margin-top:8px; background:transparent; border:none; color:#888; font-size:13.5px; font-weight:700; cursor:pointer; }
+
+  .chat-list { padding: 16px; max-width: 600px; margin: 0 auto; }
+  .chat-list-title { font-size: 20px; font-weight: 900; margin-bottom: 14px; }
+  .chat-item { display: flex; align-items: center; gap: 12px; padding: 12px; background: #121212; border-radius: 12px; margin-bottom: 8px; cursor: pointer; }
+  .chat-item:active { background: #1a1a1a; }
+  .chat-avatar { width: 46px; height: 46px; border-radius: 50%; background: linear-gradient(135deg,#6a3093,#1e3c72); display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 17px; flex-shrink: 0; }
+  .chat-body { flex: 1; min-width: 0; }
+  .chat-name { font-weight: 800; font-size: 14.5px; margin-bottom: 3px; }
+  .chat-preview { font-size: 12.5px; opacity: .6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .chat-time { font-size: 11px; opacity: .5; flex-shrink: 0; }
+  .chat-unread { background: #6a3093; color: #fff; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 20px; margin-left: 8px; }
+
+  .chat-room { position: fixed; inset: 0; background: #000; z-index: 220; display: none; flex-direction: column; }
+  .chat-room.open { display: flex; }
+  .chat-header { display: flex; align-items: center; gap: 10px; padding: 12px 16px; padding-top: calc(12px + env(safe-area-inset-top)); background: #0a0a0a; border-bottom: 1px solid #1a1a1a; flex-shrink: 0; }
+  .chat-back { background: transparent; border: none; color: #fff; font-size: 22px; cursor: pointer; padding: 4px 8px; }
+  .chat-header-name { font-weight: 800; font-size: 15px; flex: 1; }
+  .chat-header-status { font-size: 11px; opacity: .5; }
+
+  .chat-messages { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 8px; -webkit-overflow-scrolling: touch; }
+  .chat-messages::-webkit-scrollbar { display: none; }
+  .msg { max-width: 78%; padding: 10px 14px; border-radius: 18px; font-size: 14px; line-height: 1.4; word-wrap: break-word; }
+  .msg.me { align-self: flex-end; background: #6a3093; color: #fff; border-bottom-right-radius: 4px; }
+  .msg.them { align-self: flex-start; background: #1a1a1a; color: #fff; border-bottom-left-radius: 4px; }
+  .msg-time { font-size: 10px; opacity: .55; margin-top: 4px; display: block; text-align: right; }
+
+  .chat-input-row { display: flex; gap: 8px; padding: 10px 12px; padding-bottom: calc(10px + env(safe-area-inset-bottom)); background: #0a0a0a; border-top: 1px solid #1a1a1a; flex-shrink: 0; }
+  .chat-input-row input { flex: 1; background: #1a1a1a; border: 1px solid #333; color: #fff; border-radius: 22px; padding: 12px 18px; font-size: 14px; outline: none; font-family: inherit; }
+  .chat-input-row button { background: #6a3093; color: #fff; border: none; border-radius: 22px; padding: 12px 20px; font-size: 14px; font-weight: 800; cursor: pointer; }
+  .chat-empty { text-align: center; padding: 60px 30px; opacity: .5; font-size: 13.5px; line-height: 1.7; }
+
+  /* ─── ADMIN PANEL ─── */
+  .admin-page {
+    position: fixed; inset: 0; background: #0a0a0a; z-index: 260;
+    display: none; flex-direction: column; overflow-y: auto;
   }
-  .ad-slot.active { height: auto; padding: 12px; border-top: 1px solid #1a1a1a; border-bottom: 1px solid #1a1a1a; }
-  .ad-slot::before { content: ''; }
+  .admin-page.open { display: flex; }
+  .admin-header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 14px 16px; padding-top: calc(14px + env(safe-area-inset-top));
+    background: #111; border-bottom: 1px solid #1a1a1a; flex-shrink: 0;
+    position: sticky; top: 0; z-index: 10;
+  }
+  .admin-header h2 { font-size: 17px; font-weight: 900; flex: 1; }
+  .admin-close { background: transparent; border: none; color: #fff; font-size: 22px; cursor: pointer; }
+
+  .admin-body { padding: 14px; padding-bottom: calc(14px + env(safe-area-inset-bottom)); }
+  .admin-tabs { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+  .admin-tab {
+    padding: 10px 16px; background: #1a1a1a; border: none; color: #888;
+    border-radius: 20px; font-size: 12px; font-weight: 700; cursor: pointer;
+  }
+  .admin-tab.active { background: #6a3093; color: #fff; }
+
+  .admin-card {
+    background: #121212; border-radius: 12px; padding: 14px;
+    margin-bottom: 10px;
+  }
+  .admin-card h3 { font-size: 14px; font-weight: 800; margin-bottom: 8px; color: #fff; }
+  .admin-card p { font-size: 12.5px; opacity: .7; line-height: 1.5; }
+
+  .admin-btn-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+  .admin-btn {
+    padding: 8px 14px; background: #1f1f1f; border: none; color: #fff;
+    border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer;
+  }
+  .admin-btn.warn { background: #ff9800; }
+  .admin-btn.block { background: #c62828; }
+  .admin-btn.unblock { background: #4caf50; }
+  .admin-btn.delete { background: #c62828; }
+  .admin-btn.view { background: #2196f3; }
+  .admin-btn.primary { background: #6a3093; }
+
+  .admin-user-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 0; border-bottom: 1px solid #1a1a1a;
+  }
+  .admin-user-row:last-child { border-bottom: none; }
+  .admin-user-info { flex: 1; min-width: 0; }
+  .admin-user-name { font-weight: 800; font-size: 13.5px; }
+  .admin-user-meta { font-size: 11px; opacity: .6; margin-top: 2px; }
+
+  .admin-stat-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px;
+  }
+  .admin-stat {
+    background: #121212; border-radius: 10px; padding: 14px; text-align: center;
+  }
+  .admin-stat .num { font-size: 24px; font-weight: 900; color: #b088ff; }
+  .admin-stat .lbl { font-size: 11px; opacity: .6; margin-top: 4px; text-transform: uppercase; font-weight: 700; }
 </style>
 </head>
 <body>
@@ -171,8 +238,9 @@
   <button class="nav-btn create" onclick="openComposer()">
     <span class="ni">+</span>
   </button>
-  <button class="nav-btn" onclick="switchTab('inbox', event)">
+  <button class="nav-btn" onclick="switchTab('inbox', event)" id="inboxBtn">
     <span class="ni">💬</span><span>Inbox</span>
+    <span class="nav-badge" id="inboxBadge" style="display:none;">0</span>
   </button>
   <button class="nav-btn" onclick="switchTab('me', event)">
     <span class="ni">👤</span><span>Me</span>
@@ -190,14 +258,61 @@
       <span>📷</span> <span id="uploadLabel">Tap to add photo</span>
     </label>
     <input type="file" id="fileInput" accept="image/*" onchange="handleImage(this)">
-
-    <!-- ADMIN-ONLY: Sponsored post toggle -->
     <div class="toggle-row" id="sponsoredRow" style="display:none;">
       <span>💰 Sponsored post (paid promotion)</span>
       <input type="checkbox" id="sponsoredToggle">
     </div>
-
     <button class="submit-btn" onclick="submitPost()">Post</button>
+  </div>
+</div>
+
+<div class="report-menu" id="reportMenu" onclick="if(event.target===this)closeReport()">
+  <div class="report-card">
+    <h3>Report this post</h3>
+    <button class="report-reason" onclick="submitReport('insult')">💬 Insult or harassment</button>
+    <button class="report-reason" onclick="submitReport('nudity')">🚫 Nudity or sexual content</button>
+    <button class="report-reason" onclick="submitReport('violence')">⚔️ Violence or threats</button>
+    <button class="report-reason" onclick="submitReport('spam')">📢 Spam or scam</button>
+    <button class="report-reason" onclick="submitReport('copyright')">©️ Copyright violation</button>
+    <button class="report-reason" onclick="submitReport('other')">❓ Other</button>
+    <button class="report-cancel" onclick="closeReport()">Cancel</button>
+  </div>
+</div>
+
+<!-- CHAT ROOM -->
+<div class="chat-room" id="chatRoom">
+  <div class="chat-header">
+    <button class="chat-back" onclick="closeChat()">←</button>
+    <div class="chat-avatar" id="chatRoomAvatar" style="width:38px;height:38px;font-size:15px;">?</div>
+    <div style="flex:1;min-width:0;">
+      <div class="chat-header-name" id="chatRoomName">User</div>
+      <div class="chat-header-status">Active now</div>
+    </div>
+  </div>
+  <div class="chat-messages" id="chatMessages"></div>
+  <div class="chat-input-row">
+    <input type="text" id="chatInput" placeholder="Message..." maxlength="500"
+           onkeydown="if(event.key==='Enter')sendMessage()">
+    <button onclick="sendMessage()">Send</button>
+  </div>
+</div>
+
+<!-- ADMIN PANEL -->
+<div class="admin-page" id="adminPage">
+  <div class="admin-header">
+    <button class="admin-close" onclick="closeAdmin()">←</button>
+    <h2>⚙️ Admin Panel</h2>
+  </div>
+  <div class="admin-body">
+    <div class="admin-tabs" id="adminTabs">
+      <button class="admin-tab active" onclick="adminSwitch('overview', this)">Overview</button>
+      <button class="admin-tab" onclick="adminSwitch('users', this)">Users</button>
+      <button class="admin-tab" onclick="adminSwitch('posts', this)">Posts</button>
+      <button class="admin-tab" onclick="adminSwitch('chats', this)">Chats</button>
+      <button class="admin-tab" onclick="adminSwitch('reports', this)">Reports</button>
+      <button class="admin-tab" onclick="adminSwitch('banned', this)">Banned</button>
+    </div>
+    <div id="adminContent"></div>
   </div>
 </div>
 
@@ -210,9 +325,19 @@ var LIKES_KEY = 'gada_likes';
 var USER_KEY = 'gada_user';
 var ADMIN_KEY = 'gada_admin';
 var TIPS_KEY = 'gada_tips';
+var BLOCKED_USERS_KEY = 'gada_blocked_users';      // per-user block (you blocked them)
+var BANNED_USERS_KEY = 'gada_banned_users';        // admin global ban
+var WARNINGS_KEY = 'gada_warnings';                // admin warnings to users
+var REPORTS_KEY = 'gada_reports';
+var CHATS_KEY = 'gada_chats';
 var ADMIN_PASSWORD = 'gada2026';
 
+var BLOCKED_WORDS = ['insult1', 'insult2', 'badword', 'idiot', 'stupid', 'fool', 'moron'];
+
 var pendingImage = null;
+var reportingPostId = null;
+var currentChatUser = null;
+var adminViewingUser = null;
 
 // ─── STATE ───
 function getPosts(){ try { return JSON.parse(localStorage.getItem(POSTS_KEY) || '[]'); } catch(e){ return []; } }
@@ -225,14 +350,67 @@ function getUser(){
 }
 function saveUser(u){ localStorage.setItem(USER_KEY, JSON.stringify(u)); }
 function isAdmin(){ return localStorage.getItem(ADMIN_KEY) === '1'; }
-function getTips(){ try { return JSON.parse(localStorage.getItem(TIPS_KEY) || '{}'); } catch(e){ return {}; } }
-function saveTips(t){ localStorage.setItem(TIPS_KEY, JSON.stringify(t)); }
+function getBlockedUsers(){ try { return JSON.parse(localStorage.getItem(BLOCKED_USERS_KEY) || '[]'); } catch(e){ return []; } }
+function saveBlockedUsers(a){ localStorage.setItem(BLOCKED_USERS_KEY, JSON.stringify(a)); }
+function getBannedUsers(){ try { return JSON.parse(localStorage.getItem(BANNED_USERS_KEY) || '[]'); } catch(e){ return []; } }
+function saveBannedUsers(a){ localStorage.setItem(BANNED_USERS_KEY, JSON.stringify(a)); }
+function getWarnings(){ try { return JSON.parse(localStorage.getItem(WARNINGS_KEY) || '[]'); } catch(e){ return []; } }
+function saveWarnings(a){ localStorage.setItem(WARNINGS_KEY, JSON.stringify(a)); }
+function getReports(){ try { return JSON.parse(localStorage.getItem(REPORTS_KEY) || '[]'); } catch(e){ return []; } }
+function saveReports(a){ localStorage.setItem(REPORTS_KEY, JSON.stringify(a)); }
+function getChats(){ try { return JSON.parse(localStorage.getItem(CHATS_KEY) || '{}'); } catch(e){ return {}; } }
+function saveChats(c){ localStorage.setItem(CHATS_KEY, JSON.stringify(c)); }
 
-// ─── RENDER ───
+function isUserBlocked(n){ return getBlockedUsers().indexOf(n) !== -1; }
+function isUserBanned(n){ return getBannedUsers().indexOf(n) !== -1; }
+function isPostHidden(p){ return (p.reportCount || 0) >= 3; }
+
+function containsBlockedWords(text){
+  if(!text) return false;
+  var lower = text.toLowerCase();
+  for(var i = 0; i < BLOCKED_WORDS.length; i++){
+    if(lower.indexOf(BLOCKED_WORDS[i].toLowerCase()) !== -1) return true;
+  }
+  return false;
+}
+
+// ─── UNREAD ───
+function getUnreadCount(){
+  var chats = getChats(); var c = 0;
+  Object.keys(chats).forEach(function(u){
+    chats[u].forEach(function(m){ if(m.from !== 'me' && !m.read) c++; });
+  });
+  return c;
+}
+function updateInboxBadge(){
+  var badge = document.getElementById('inboxBadge');
+  var n = getUnreadCount();
+  if(n > 0){ badge.textContent = n > 9 ? '9+' : n; badge.style.display = 'flex'; }
+  else badge.style.display = 'none';
+}
+
+// ─── RENDER FEED ───
 function renderFeed(){
   var feed = document.getElementById('feed');
-  var posts = getPosts();
+  feed.style.scrollSnapType = '';
+  var allPosts = getPosts();
   var likes = getLikes();
+  var u = getUser();
+
+  var posts = allPosts.filter(function(p){
+    if(isUserBlocked(p.user)) return false;
+    if(isUserBanned(p.user)) return false;
+    if(isPostHidden(p) && !isAdmin()) return false;
+    return true;
+  });
+
+  // Admin sees banned warning
+  if(isAdmin()){
+    var banned = getBannedUsers();
+    if(banned.length){
+      // shown as part of feed, no banner needed
+    }
+  }
 
   if(!posts.length){
     feed.innerHTML =
@@ -251,13 +429,13 @@ function renderFeed(){
     var bgStyle = p.image ? 'background-image:url(' + p.image + ');' : 'background:linear-gradient(135deg,#1a1a2e,#6a3093);';
     var sponsoredTag = p.sponsored ? '<div class="sponsored-tag">Sponsored</div>' : '';
     var verifiedBadge = p.verified ? ' verified' : '';
+    var bannedBadge = isUserBanned(p.user) ? ' <span style="background:#c62828;color:#fff;font-size:9px;padding:2px 6px;border-radius:4px;">BANNED</span>' : '';
 
     return '<div class="clip" data-post-id="' + p.id + '">' +
       '<div class="clip-bg" style="' + bgStyle + '"></div>' +
       '<div class="clip-actions">' +
         '<div class="act ' + liked + '" onclick="toggleLike(\'' + p.id + '\')">' +
-          '<span class="ic">' + (likes[p.id] ? '❤️' : '🤍') + '</span>' +
-          '<span>' + likeCount + '</span>' +
+          '<span class="ic">' + (likes[p.id] ? '❤️' : '🤍') + '</span><span>' + likeCount + '</span>' +
         '</div>' +
         '<div class="act" onclick="showToast(\'Comments coming soon\')">' +
           '<span class="ic">💬</span><span>' + ((p.comments || []).length) + '</span>' +
@@ -265,15 +443,21 @@ function renderFeed(){
         '<div class="act tip" onclick="sendTip(\'' + p.id + '\')">' +
           '<span class="ic">💵</span><span>Tip</span>' +
         '</div>' +
+        '<div class="act report" onclick="openReport(\'' + p.id + '\')">' +
+          '<span class="ic">🚩</span><span>Report</span>' +
+        '</div>' +
+        '<div class="act chat" onclick="openChatWith(\'' + escapeAttr(p.user) + '\')">' +
+          '<span class="ic">✉️</span><span>Chat</span>' +
+        '</div>' +
         '<div class="act" onclick="sharePost(\'' + p.id + '\')">' +
           '<span class="ic">↗️</span><span>Share</span>' +
         '</div>' +
       '</div>' +
       '<div class="clip-content">' +
-        '<div class="clip-user">' +
+        '<div class="clip-user" onclick="openChatWith(\'' + escapeAttr(p.user) + '\')">' +
           '<div class="clip-avatar' + verifiedBadge + '">' + escapeHtml(p.user.charAt(0).toUpperCase()) + '</div>' +
           '<div>' +
-            '<div class="clip-name">' + escapeHtml(p.user) + '</div>' +
+            '<div class="clip-name">' + escapeHtml(p.user) + bannedBadge + '</div>' +
             '<div style="font-size:11px; opacity:.7;">' + timeAgo(p.at) + '</div>' +
           '</div>' +
         '</div>' +
@@ -281,43 +465,63 @@ function renderFeed(){
         '<div class="clip-text">' + escapeHtml(p.text) + '</div>' +
         '<div class="clip-music">🎵 Original sound · ' + escapeHtml(p.user) + '</div>' +
       '</div>' +
-    '</div>' +
-    '<div class="ad-slot" id="ad-' + p.id + '"></div>';
+    '</div>';
   }).join('');
 }
 
-// ─── LIKES ───
+// ─── LIKE / TIP / SHARE ───
 function toggleLike(id){
   var likes = getLikes();
   if(likes[id]) delete likes[id]; else likes[id] = true;
   saveLikes(likes);
   renderFeed();
 }
-
-// ─── TIPS (placeholder — wire to Telebirr/Chapa later) ───
-function sendTip(id){
-  if(!isSignedIn()) { showToast('Sign in to tip'); return; }
-  showToast('💵 Tipping coming soon');
-  // Later: open Telebirr payment modal
-}
-
-// ─── SHARE ───
+function sendTip(id){ showToast('💵 Tipping coming soon'); }
 function sharePost(id){
   var post = getPosts().find(function(p){ return p.id === id; });
   if(!post) return;
-  if(navigator.share){
-    navigator.share({ title:'Gada', text: post.text }).catch(function(){});
-  } else {
-    navigator.clipboard.writeText(post.text);
-    showToast('Copied!');
-  }
+  if(navigator.share) navigator.share({ title:'Gada', text: post.text }).catch(function(){});
+  else { navigator.clipboard.writeText(post.text); showToast('Copied!'); }
+}
+
+// ─── REPORT ───
+function openReport(postId){
+  reportingPostId = postId;
+  document.getElementById('reportMenu').classList.add('open');
+}
+function closeReport(){
+  reportingPostId = null;
+  document.getElementById('reportMenu').classList.remove('open');
+}
+function submitReport(reason){
+  if(!reportingPostId) return;
+  var posts = getPosts();
+  var post = posts.find(function(p){ return p.id === reportingPostId; });
+  if(!post){ closeReport(); return; }
+  post.reportCount = (post.reportCount || 0) + 1;
+  savePosts(posts);
+  var reports = getReports();
+  reports.unshift({ postId: reportingPostId, reportedUser: post.user, reason: reason, at: Date.now() });
+  saveReports(reports.slice(0, 200));
+  var blocked = getBlockedUsers();
+  if(blocked.indexOf(post.user) === -1){ blocked.push(post.user); saveBlockedUsers(blocked); }
+  closeReport();
+  showToast('✅ Reported. User blocked.');
+  renderFeed();
+}
+
+// ─── BLOCK / UNBLOCK (user-level) ───
+function unblockUser(name){
+  var b = getBlockedUsers();
+  var i = b.indexOf(name);
+  if(i !== -1){ b.splice(i, 1); saveBlockedUsers(b); showToast('Unblocked ' + name); renderFeed(); }
 }
 
 // ─── COMPOSER ───
 function openComposer(){
+  if(isUserBanned(getUser().name)){ showToast('🚫 You are banned'); return; }
   document.getElementById('sheet').classList.add('open');
   document.getElementById('postText').focus();
-  // Show sponsored toggle only for admin
   document.getElementById('sponsoredRow').style.display = isAdmin() ? 'flex' : 'none';
 }
 function closeComposer(){
@@ -329,7 +533,6 @@ function closeComposer(){
   document.getElementById('uploadLabel').textContent = 'Tap to add photo';
   pendingImage = null;
 }
-
 function handleImage(input){
   var f = input.files[0];
   if(!f) return;
@@ -342,27 +545,20 @@ function handleImage(input){
   };
   reader.readAsDataURL(f);
 }
-
 function submitPost(){
   var text = document.getElementById('postText').value.trim();
   var sponsored = document.getElementById('sponsoredToggle').checked;
   if(!text && !pendingImage){ showToast('Add text or image'); return; }
+  if(containsBlockedWords(text)){ showToast('⚠️ Post contains not-allowed words'); return; }
 
   var u = getUser();
+  if(isUserBanned(u.name)){ showToast('🚫 You are banned'); return; }
+
   var posts = getPosts();
   posts.unshift({
-    id: 'p_' + Date.now(),
-    user: u.name,
-    verified: u.verified || false,
-    premium: u.premium || false,
-    text: text,
-    image: pendingImage,
-    sponsored: sponsored,
-    at: Date.now(),
-    likes: 0,
-    tips: 0,
-    views: 0,
-    comments: []
+    id: 'p_' + Date.now(), user: u.name, verified: u.verified || false, premium: u.premium || false,
+    text: text, image: pendingImage, sponsored: sponsored, at: Date.now(),
+    likes: 0, tips: 0, views: 0, reportCount: 0, comments: []
   });
   savePosts(posts);
   closeComposer();
@@ -377,73 +573,423 @@ function switchTab(tab, ev){
 
   if(tab === 'home') renderFeed();
   else if(tab === 'search') showToast('Search coming soon');
-  else if(tab === 'inbox') showToast('Inbox coming soon');
+  else if(tab === 'inbox') renderInbox();
   else if(tab === 'me') showMe();
+}
+
+// ─── INBOX ───
+function renderInbox(){
+  var feed = document.getElementById('feed');
+  feed.style.scrollSnapType = 'none';
+  var chats = getChats();
+  var users = Object.keys(chats).filter(function(u){ return chats[u] && chats[u].length; });
+
+  if(!users.length){
+    feed.innerHTML = '<div class="chat-empty"><div style="font-size:50px;margin-bottom:14px;opacity:.4;">💬</div><div style="font-weight:800;margin-bottom:8px;">No messages yet</div>Tap the ✉️ Chat button on any post to start a conversation.</div>';
+    return;
+  }
+  users.sort(function(a, b){
+    return chats[b][chats[b].length-1].at - chats[a][chats[a].length-1].at;
+  });
+  feed.innerHTML = '<div class="chat-list"><div class="chat-list-title">💬 Inbox</div>' +
+    users.map(function(u){
+      var msgs = chats[u]; var last = msgs[msgs.length-1];
+      var unread = msgs.filter(function(m){ return m.from !== 'me' && !m.read; }).length;
+      var preview = (last.from === 'me' ? 'You: ' : '') + last.text;
+      return '<div class="chat-item" onclick="openChatWith(\'' + escapeAttr(u) + '\')">' +
+        '<div class="chat-avatar">' + escapeHtml(u.charAt(0).toUpperCase()) + '</div>' +
+        '<div class="chat-body"><div class="chat-name">' + escapeHtml(u) + '</div><div class="chat-preview">' + escapeHtml(preview) + '</div></div>' +
+        '<div style="text-align:right;"><div class="chat-time">' + timeAgo(last.at) + '</div>' +
+        (unread ? '<div class="chat-unread">' + unread + '</div>' : '') + '</div>' +
+      '</div>';
+    }).join('') + '</div>';
+}
+
+// ─── CHAT ROOM ───
+function openChatWith(username){
+  if(!username) return;
+  if(username === getUser().name){ showToast('That\'s you'); return; }
+  if(isUserBlocked(username)){ showToast('You blocked ' + username); return; }
+  if(isUserBanned(username)){ showToast('🚫 User is banned'); return; }
+  currentChatUser = username;
+  document.getElementById('chatRoomName').textContent = username;
+  document.getElementById('chatRoomAvatar').textContent = username.charAt(0).toUpperCase();
+  document.getElementById('chatRoom').classList.add('open');
+  loadMessages();
+  setTimeout(function(){
+    var chats = getChats();
+    if(chats[username]){
+      chats[username].forEach(function(m){ if(m.from !== 'me') m.read = true; });
+      saveChats(chats);
+      updateInboxBadge();
+    }
+  }, 500);
+}
+function closeChat(){
+  document.getElementById('chatRoom').classList.remove('open');
+  currentChatUser = null;
+  renderFeed();
+}
+function loadMessages(){
+  if(!currentChatUser) return;
+  var chats = getChats();
+  var msgs = chats[currentChatUser] || [];
+  var box = document.getElementById('chatMessages');
+  if(!msgs.length){
+    box.innerHTML = '<div class="chat-empty">Say hi to ' + escapeHtml(currentChatUser) + ' 👋</div>';
+    return;
+  }
+  box.innerHTML = msgs.map(function(m){
+    var cls = m.from === 'me' ? 'me' : 'them';
+    return '<div class="msg ' + cls + '">' + escapeHtml(m.text) +
+      '<span class="msg-time">' + new Date(m.at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) + '</span>' +
+    '</div>';
+  }).join('');
+  setTimeout(function(){ box.scrollTop = box.scrollHeight; }, 30);
+}
+function sendMessage(){
+  var input = document.getElementById('chatInput');
+  var text = input.value.trim();
+  if(!text || !currentChatUser) return;
+  if(containsBlockedWords(text)){ showToast('⚠️ Not allowed'); return; }
+  if(isUserBanned(getUser().name)){ showToast('🚫 You are banned'); return; }
+
+  var chats = getChats();
+  if(!chats[currentChatUser]) chats[currentChatUser] = [];
+  chats[currentChatUser].push({ from: 'me', text: text, at: Date.now(), read: true });
+  saveChats(chats);
+  input.value = '';
+  loadMessages();
 }
 
 // ─── ME TAB ───
 function showMe(){
   var u = getUser();
+  var blocked = getBlockedUsers();
   var feed = document.getElementById('feed');
+  feed.style.scrollSnapType = 'none';
+
+  var bannedBanner = isUserBanned(u.name)
+    ? '<div style="background:#c62828;padding:12px;border-radius:10px;margin:12px auto;max-width:300px;font-size:13px;font-weight:700;">🚫 You are banned from posting</div>'
+    : '';
+
+  var blockedList = blocked.length
+    ? '<div style="margin-top:20px;text-align:left;max-width:300px;">' +
+        '<div style="font-size:12px;opacity:.6;margin-bottom:8px;font-weight:700;">BLOCKED USERS (' + blocked.length + ')</div>' +
+        blocked.map(function(b){
+          return '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:#1a1a1a;border-radius:8px;margin-bottom:6px;font-size:13px;">' +
+            '<span>' + escapeHtml(b) + '</span>' +
+            '<button onclick="unblockUser(\'' + escapeAttr(b) + '\')" style="background:#333;border:none;color:#fff;padding:6px 12px;border-radius:6px;font-size:11px;cursor:pointer;">Unblock</button>' +
+          '</div>';
+        }).join('') + '</div>'
+    : '';
+
   feed.innerHTML =
     '<div class="empty-state">' +
       '<div class="clip-avatar' + (u.verified ? ' verified' : '') + '" style="width:80px; height:80px; font-size:32px;">' + escapeHtml(u.name.charAt(0).toUpperCase()) + '</div>' +
       '<h2>' + escapeHtml(u.name) + '</h2>' +
       '<p>' + (u.premium ? '⭐ Premium' : 'Free user') + '</p>' +
-      '<button onclick="adminLogin()">' + (isAdmin() ? '⚙️ Admin Panel' : '⚙️ Admin login') + '</button>' +
-      (isAdmin() ? '<button onclick="toggleVerified()" style="background:#1DA1F2;">' + (u.verified ? 'Remove Verified Badge' : 'Get Verified Badge (Admin)') + '</button>' : '') +
-      (isAdmin() ? '<button onclick="logoutAdmin()" style="background:#c62828;">Logout Admin</button>' : '') +
+      bannedBanner +
+      '<button onclick="adminLogin()">' + (isAdmin() ? '⚙️ Open Admin Panel' : '⚙️ Admin login') + '</button>' +
+      blockedList +
+      '<p style="font-size:12px;opacity:.5;margin-top:20px;">' +
+        '<a href="privacy.html" style="color:#b088ff;text-decoration:none;">Privacy Policy</a> · ' +
+        '<a href="terms.html" style="color:#b088ff;text-decoration:none;">Terms</a>' +
+      '</p>' +
     '</div>';
 }
 
-// ─── ADMIN ───
+// ═══════════════════════════════════════════════
+// ─── ADMIN PANEL ───
+// ═══════════════════════════════════════════════
 function adminLogin(){
-  if(isAdmin()){
-    showAdminPanel();
-    return;
-  }
+  if(isAdmin()){ openAdmin(); return; }
   var pw = prompt('Admin password:');
   if(pw === ADMIN_PASSWORD){
     localStorage.setItem(ADMIN_KEY, '1');
     showToast('Admin mode ON');
-    showMe();
-  } else if(pw !== null){
-    showToast('Wrong password');
-  }
+    openAdmin();
+  } else if(pw !== null){ showToast('Wrong password'); }
+}
+function openAdmin(){
+  if(!isAdmin()) return;
+  document.getElementById('adminPage').classList.add('open');
+  adminSwitch('overview');
+}
+function closeAdmin(){
+  document.getElementById('adminPage').classList.remove('open');
+  renderFeed();
 }
 function logoutAdmin(){
   localStorage.removeItem(ADMIN_KEY);
-  showMe();
+  closeAdmin();
+  showToast('Logged out');
 }
-function showAdminPanel(){
-  var feed = document.getElementById('feed');
-  feed.innerHTML =
-    '<div class="empty-state">' +
-      '<div class="eicon">⚙️</div>' +
-      '<h2>Admin Panel</h2>' +
-      '<p>Manage Gada</p>' +
-      '<button onclick="toggleVerified()">Toggle Verified Badge</button>' +
-      '<button onclick="exportAll()">Export All Posts (JSON)</button>' +
-      '<button onclick="logoutAdmin()" style="background:#c62828;">Logout Admin</button>' +
+function adminSwitch(section, btn){
+  if(btn){
+    document.querySelectorAll('.admin-tab').forEach(function(b){ b.classList.remove('active'); });
+    btn.classList.add('active');
+  }
+  var c = document.getElementById('adminContent');
+  if(section === 'overview') adminOverview(c);
+  else if(section === 'users') adminUsers(c);
+  else if(section === 'posts') adminPosts(c);
+  else if(section === 'chats') adminChats(c);
+  else if(section === 'reports') adminReports(c);
+  else if(section === 'banned') adminBanned(c);
+}
+
+// ─── OVERVIEW ───
+function adminOverview(c){
+  var posts = getPosts();
+  var users = getAllUsers();
+  var reports = getReports();
+  var banned = getBannedUsers();
+  var chats = getChats();
+  var totalMsgs = 0;
+  Object.keys(chats).forEach(function(u){ totalMsgs += chats[u].length; });
+
+  c.innerHTML =
+    '<div class="admin-stat-grid">' +
+      '<div class="admin-stat"><div class="num">' + posts.length + '</div><div class="lbl">Posts</div></div>' +
+      '<div class="admin-stat"><div class="num">' + users.length + '</div><div class="lbl">Users</div></div>' +
+      '<div class="admin-stat"><div class="num">' + reports.length + '</div><div class="lbl">Reports</div></div>' +
+      '<div class="admin-stat"><div class="num">' + banned.length + '</div><div class="lbl">Banned</div></div>' +
+      '<div class="admin-stat"><div class="num">' + totalMsgs + '</div><div class="lbl">Messages</div></div>' +
+      '<div class="admin-stat"><div class="num">' + Object.keys(chats).length + '</div><div class="lbl">Chats</div></div>' +
+    '</div>' +
+    '<div class="admin-card"><h3>⚠️ Local Mode</h3><p>This admin panel sees data <strong>on this device only</strong>. To see chats from other phones, you need Firebase. Data here reflects posts, chats, and users created on <em>this</em> phone.</p></div>' +
+    '<div class="admin-card"><h3>💾 Export</h3><p>Copy all data as JSON to your clipboard.</p><button class="admin-btn primary" onclick="adminExport()">📋 Export All Data</button></div>' +
+    '<div class="admin-card"><h3>🚪 Logout</h3><p>Exit admin mode.</p><button class="admin-btn block" onclick="logoutAdmin()">Logout Admin</button></div>';
+}
+
+// ─── USERS ───
+function adminUsers(c){
+  var users = getAllUsers();
+  if(!users.length){
+    c.innerHTML = '<div class="admin-card"><p>No users found.</p></div>';
+    return;
+  }
+  c.innerHTML = users.map(function(u){
+    var banned = isUserBanned(u.name);
+    var posts = getPosts().filter(function(p){ return p.user === u.name; }).length;
+    return '<div class="admin-card">' +
+      '<div class="admin-user-row">' +
+        '<div class="chat-avatar" style="width:40px;height:40px;font-size:15px;">' + escapeHtml(u.name.charAt(0).toUpperCase()) + '</div>' +
+        '<div class="admin-user-info">' +
+          '<div class="admin-user-name">' + escapeHtml(u.name) + (banned ? ' <span style="background:#c62828;color:#fff;font-size:9px;padding:2px 6px;border-radius:4px;">BANNED</span>' : '') + '</div>' +
+          '<div class="admin-user-meta">' + posts + ' post' + (posts === 1 ? '' : 's') + '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="admin-btn-row">' +
+        '<button class="admin-btn warn" onclick="adminWarn(\'' + escapeAttr(u.name) + '\')">⚠️ Warn</button>' +
+        (banned
+          ? '<button class="admin-btn unblock" onclick="adminUnban(\'' + escapeAttr(u.name) + '\')">✅ Unban</button>'
+          : '<button class="admin-btn block" onclick="adminBan(\'' + escapeAttr(u.name) + '\')">🚫 Ban</button>') +
+        '<button class="admin-btn view" onclick="adminViewUserPosts(\'' + escapeAttr(u.name) + '\')">📄 Posts</button>' +
+        '<button class="admin-btn view" onclick="adminViewUserChats(\'' + escapeAttr(u.name) + '\')">💬 Chats</button>' +
+      '</div>' +
     '</div>';
+  }).join('');
 }
-function toggleVerified(){
+function getAllUsers(){
+  // Collect all unique usernames from posts + chats + current user
+  var names = {};
   var u = getUser();
-  u.verified = !u.verified;
-  saveUser(u);
-  showToast(u.verified ? '✓ Verified badge ON' : 'Verified badge OFF');
-  showMe();
+  if(u.name) names[u.name] = true;
+  getPosts().forEach(function(p){ names[p.user] = true; });
+  Object.keys(getChats()).forEach(function(n){ names[n] = true; });
+  return Object.keys(names).map(function(n){ return { name: n }; });
 }
-function exportAll(){
+
+function adminWarn(name){
+  var msg = prompt('Warning message to send to ' + name + ':', 'Please follow our community rules.');
+  if(!msg) return;
+  var w = getWarnings();
+  w.push({ to: name, message: msg, at: Date.now() });
+  saveWarnings(w);
+  showToast('⚠️ Warning sent to ' + name);
+}
+function adminBan(name){
+  if(!confirm('Ban ' + name + '? They won\'t be able to post or chat.')) return;
+  var b = getBannedUsers();
+  if(b.indexOf(name) === -1) b.push(name);
+  saveBannedUsers(b);
+  showToast('🚫 ' + name + ' banned');
+  adminUsers(document.getElementById('adminContent'));
+}
+function adminUnban(name){
+  var b = getBannedUsers();
+  var i = b.indexOf(name);
+  if(i !== -1) b.splice(i, 1);
+  saveBannedUsers(b);
+  showToast('✅ ' + name + ' unbanned');
+  adminUsers(document.getElementById('adminContent'));
+}
+function adminViewUserPosts(name){
+  var posts = getPosts().filter(function(p){ return p.user === name; });
+  var c = document.getElementById('adminContent');
+  if(!posts.length){
+    c.innerHTML = '<div class="admin-card"><h3>Posts by ' + escapeHtml(name) + '</h3><p>No posts.</p><button class="admin-btn" onclick="adminSwitch(\'users\')">← Back</button></div>';
+    return;
+  }
+  c.innerHTML = '<div class="admin-card"><h3>Posts by ' + escapeHtml(name) + ' (' + posts.length + ')</h3></div>' +
+    posts.map(function(p){
+      return '<div class="admin-card">' +
+        '<p style="font-size:13px;color:#fff;opacity:.95;">' + escapeHtml(p.text || '(image only)') + '</p>' +
+        '<div class="admin-user-meta" style="margin-top:6px;">' + new Date(p.at).toLocaleString() + '</div>' +
+        '<div class="admin-btn-row"><button class="admin-btn delete" onclick="adminDeletePost(\'' + p.id + '\')">🗑 Delete</button></div>' +
+      '</div>';
+    }).join('') +
+    '<button class="admin-btn" style="margin-top:10px;" onclick="adminSwitch(\'users\')">← Back to users</button>';
+}
+function adminDeletePost(id){
+  if(!confirm('Delete this post?')) return;
+  savePosts(getPosts().filter(function(p){ return p.id !== id; }));
+  showToast('Deleted');
+  adminViewUserPosts(adminViewingUser || '');
+}
+
+// ─── POSTS ───
+function adminPosts(c){
+  var posts = getPosts();
+  if(!posts.length){
+    c.innerHTML = '<div class="admin-card"><p>No posts yet.</p></div>';
+    return;
+  }
+  c.innerHTML = posts.map(function(p){
+    return '<div class="admin-card">' +
+      '<h3>' + escapeHtml(p.user) + '</h3>' +
+      '<p style="color:#fff;opacity:.95;">' + escapeHtml(p.text || '(image only)') + '</p>' +
+      '<div class="admin-user-meta" style="margin-top:6px;">' + new Date(p.at).toLocaleString() + ' · ' + (p.reportCount || 0) + ' reports</div>' +
+      '<div class="admin-btn-row">' +
+        '<button class="admin-btn delete" onclick="adminDeletePostFromList(\'' + p.id + '\')">🗑 Delete</button>' +
+        '<button class="admin-btn warn" onclick="adminWarn(\'' + escapeAttr(p.user) + '\')">⚠️ Warn ' + escapeHtml(p.user) + '</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+function adminDeletePostFromList(id){
+  if(!confirm('Delete this post?')) return;
+  savePosts(getPosts().filter(function(p){ return p.id !== id; }));
+  showToast('Deleted');
+  adminPosts(document.getElementById('adminContent'));
+}
+
+// ─── CHATS ───
+function adminChats(c){
+  var chats = getChats();
+  var users = Object.keys(chats).filter(function(u){ return chats[u] && chats[u].length; });
+  if(!users.length){
+    c.innerHTML = '<div class="admin-card"><p>No chats yet.</p></div>';
+    return;
+  }
+  c.innerHTML = '<div class="admin-card"><h3>💬 All chats (this device)</h3><p>These are chats stored on this phone.</p></div>' +
+    users.map(function(u){
+      var msgs = chats[u];
+      var last = msgs[msgs.length-1];
+      return '<div class="admin-card" onclick="adminViewChat(\'' + escapeAttr(u) + '\')" style="cursor:pointer;">' +
+        '<div class="admin-user-row">' +
+          '<div class="chat-avatar" style="width:40px;height:40px;font-size:15px;">' + escapeHtml(u.charAt(0).toUpperCase()) + '</div>' +
+          '<div class="admin-user-info">' +
+            '<div class="admin-user-name">' + escapeHtml(u) + '</div>' +
+            '<div class="admin-user-meta">' + msgs.length + ' messages · ' + timeAgo(last.at) + '</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+}
+function adminViewUserChats(name){
+  adminViewingUser = name;
+  var chats = getChats();
+  var msgs = chats[name] || [];
+  var c = document.getElementById('adminContent');
+  c.innerHTML = '<div class="admin-card"><h3>Chats with ' + escapeHtml(name) + '</h3></div>' +
+    (msgs.length ? msgs.map(function(m){
+      return '<div class="admin-card">' +
+        '<div class="admin-user-meta" style="margin-bottom:4px;">' + (m.from === 'me' ? 'You' : escapeHtml(name)) + ' · ' + new Date(m.at).toLocaleString() + '</div>' +
+        '<p style="color:#fff;">' + escapeHtml(m.text) + '</p>' +
+      '</div>';
+    }).join('') : '<div class="admin-card"><p>No messages.</p></div>') +
+    '<button class="admin-btn" style="margin-top:10px;" onclick="adminSwitch(\'users\')">← Back to users</button>';
+}
+function adminViewChat(name){
+  var chats = getChats();
+  var msgs = chats[name] || [];
+  var c = document.getElementById('adminContent');
+  c.innerHTML = '<div class="admin-card"><h3>💬 Chat with ' + escapeHtml(name) + '</h3></div>' +
+    (msgs.length ? msgs.map(function(m){
+      return '<div class="admin-card">' +
+        '<div class="admin-user-meta" style="margin-bottom:4px;">' + (m.from === 'me' ? 'You' : escapeHtml(name)) + ' · ' + new Date(m.at).toLocaleString() + '</div>' +
+        '<p style="color:#fff;">' + escapeHtml(m.text) + '</p>' +
+      '</div>';
+    }).join('') : '<div class="admin-card"><p>No messages.</p></div>') +
+    '<button class="admin-btn" style="margin-top:10px;" onclick="adminSwitch(\'chats\')">← Back to chats</button>';
+}
+
+// ─── REPORTS ───
+function adminReports(c){
+  var reports = getReports();
+  if(!reports.length){
+    c.innerHTML = '<div class="admin-card"><p>No reports yet.</p></div>';
+    return;
+  }
+  c.innerHTML = reports.map(function(r){
+    return '<div class="admin-card">' +
+      '<h3>' + escapeHtml(r.reportedUser) + '</h3>' +
+      '<p>Reason: <strong>' + escapeHtml(r.reason) + '</strong></p>' +
+      '<div class="admin-user-meta" style="margin-top:6px;">' + new Date(r.at).toLocaleString() + '</div>' +
+      '<div class="admin-btn-row">' +
+        '<button class="admin-btn delete" onclick="adminDeleteReportedPost(\'' + r.postId + '\')">🗑 Delete Post</button>' +
+        '<button class="admin-btn warn" onclick="adminWarn(\'' + escapeAttr(r.reportedUser) + '\')">⚠️ Warn User</button>' +
+        '<button class="admin-btn block" onclick="adminBan(\'' + escapeAttr(r.reportedUser) + '\');adminSwitch(\'reports\')">🚫 Ban User</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+function adminDeleteReportedPost(id){
+  if(!confirm('Delete this post?')) return;
+  savePosts(getPosts().filter(function(p){ return p.id !== id; }));
+  showToast('Post deleted');
+  adminSwitch('reports');
+}
+
+// ─── BANNED ───
+function adminBanned(c){
+  var banned = getBannedUsers();
+  if(!banned.length){
+    c.innerHTML = '<div class="admin-card"><p>No banned users.</p></div>';
+    return;
+  }
+  c.innerHTML = banned.map(function(name){
+    return '<div class="admin-card">' +
+      '<div class="admin-user-row">' +
+        '<div class="chat-avatar" style="width:40px;height:40px;font-size:15px;background:#c62828;">' + escapeHtml(name.charAt(0).toUpperCase()) + '</div>' +
+        '<div class="admin-user-info">' +
+          '<div class="admin-user-name">' + escapeHtml(name) + '</div>' +
+          '<div class="admin-user-meta">Banned</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="admin-btn-row">' +
+        '<button class="admin-btn unblock" onclick="adminUnban(\'' + escapeAttr(name) + '\');adminSwitch(\'banned\')">✅ Unban</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+// ─── EXPORT ───
+function adminExport(){
   var data = {
     posts: getPosts(),
     likes: getLikes(),
-    tips: getTips(),
+    chats: getChats(),
+    reports: getReports(),
+    bannedUsers: getBannedUsers(),
+    warnings: getWarnings(),
     exported: new Date().toISOString()
   };
-  var str = JSON.stringify(data, null, 2);
-  navigator.clipboard.writeText(str);
-  showToast('Copied to clipboard');
+  navigator.clipboard.writeText(JSON.stringify(data, null, 2));
+  showToast('📋 Copied to clipboard');
 }
 
 // ─── HELPERS ───
@@ -452,12 +998,15 @@ function escapeHtml(s){
     return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
   });
 }
+function escapeAttr(s){
+  return String(s||'').replace(/'/g, '&#39;').replace(/"/g, '&quot;');
+}
 function timeAgo(ms){
   var s = Math.floor((Date.now() - ms) / 1000);
-  if(s < 60) return s + 's ago';
-  if(s < 3600) return Math.floor(s/60) + 'm ago';
-  if(s < 86400) return Math.floor(s/3600) + 'h ago';
-  return Math.floor(s/86400) + 'd ago';
+  if(s < 60) return s + 's';
+  if(s < 3600) return Math.floor(s/60) + 'm';
+  if(s < 86400) return Math.floor(s/3600) + 'h';
+  return Math.floor(s/86400) + 'd';
 }
 var toastTimer;
 function showToast(msg){
@@ -470,6 +1019,8 @@ function showToast(msg){
 
 // ─── BOOT ───
 renderFeed();
+updateInboxBadge();
+setInterval(updateInboxBadge, 3000);
 </script>
 </body>
 </html>
