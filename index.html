@@ -1,1 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<title>Gada</title>
+<link rel="manifest" href="manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Gada">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; font-family: system-ui,-apple-system,sans-serif; -webkit-tap-highlight-color: transparent; }
+  html, body { height:100%; overflow:hidden; background:#000; color:#fff; }
+  body { display:flex; flex-direction:column; }
 
+  .feed {
+    flex:1; overflow-y:scroll; scroll-snap-type: y mandatory;
+    -webkit-overflow-scrolling: touch; padding-bottom: 70px;
+  }
+  .feed::-webkit-scrollbar { display:none; }
+
+  .clip {
+    height: calc(100vh - 70px);
+    scroll-snap-align: start;
+    display:flex; flex-direction:column; justify-content:flex-end;
+    position:relative; background:#000; padding:20px 16px 30px; overflow:hidden;
+  }
+  .clip-bg { position:absolute; inset:0; background-size:cover; background-position:center; z-index:0; }
+  .clip-bg::after { content:''; position:absolute; inset:0; background:linear-gradient(180deg, rgba(0,0,0,.15) 0%, rgba(0,0,0,.05) 40%, rgba(0,0,0,.85) 100%); }
+  .clip-content { position:relative; z-index:2; max-width:75%; }
+  .clip-user { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+  .clip-avatar {
+    width:42px; height:42px; border-radius:50%;
+    background:linear-gradient(135deg,#6a3093,#1e3c72);
+    display:flex; align-items:center; justify-content:center;
+    font-weight:900; font-size:16px; color:#fff; border:2px solid #fff;
+    position:relative;
+  }
+  .clip-avatar.verified::after {
+    content:'✓'; position:absolute; bottom:-2px; right:-2px;
+    background:#1DA1F2; color:#fff; width:16px; height:16px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:11px; font-weight:900; border:2px solid #000;
+  }
+  .clip-name { font-weight:800; font-size:15px; display:flex; align-items:center; gap:5px; }
+  .clip-text { font-size:14px; line-height:1.5; opacity:.95; margin-top:4px; }
+  .clip-music { font-size:12px; opacity:.75; margin-top:10px; display:flex; align-items:center; gap:6px; }
+  .sponsored-tag {
+    display:inline-block; background:rgba(255,200,0,.15); color:#ffc800;
+    font-size:10px; font-weight:800; padding:2px 8px; border-radius:20px;
+    margin-bottom:6px; letter-spacing:.5px; text-transform:uppercase;
+  }
+
+  .clip-actions {
+    position:absolute; right:12px; bottom:110px; z-index:3;
+    display:flex; flex-direction:column; gap:20px; align-items:center;
+  }
+  .act {
+    display:flex; flex-direction:column; align-items:center; gap:4px;
+    cursor:pointer; font-size:11px; font-weight:700;
+    transition: transform .15s; user-select:none;
+  }
+  .act:active { transform: scale(.9); }
+  .act .ic { font-size:30px; line-height:1; filter: drop-shadow(0 2px 6px rgba(0,0,0,.6)); }
+  .act.liked .ic { filter: drop-shadow(0 0 8px #ff4757); }
+  .act.tip .ic { font-size:26px; }
+
+  .nav {
+    position:fixed; bottom:0; left:0; right:0;
+    height: calc(60px + env(safe-area-inset-bottom));
+    padding-bottom: env(safe-area-inset-bottom);
+    background:#0a0a0a; border-top:1px solid #1a1a1a;
+    display:flex; z-index:100;
+  }
+  .nav-btn {
+    flex:1; background:transparent; border:none; color:#888;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:3px; font-size:10.5px; font-weight:700; cursor:pointer;
+  }
+  .nav-btn .ni { font-size:22px; }
+  .nav-btn.active { color:#fff; }
+  .nav-btn.create { color:#fff; }
+  .nav-btn.create .ni {
+    background:#fff; color:#000; width:42px; height:30px; border-radius:8px;
+    display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:900;
+  }
+
+  .sheet {
+    position:fixed; inset:0; background:rgba(0,0,0,.85);
+    z-index:200; display:none; align-items:flex-end;
+  }
+  .sheet.open { display:flex; }
+  .sheet-body {
+    width:100%; background:#111; border-top-left-radius:20px; border-top-right-radius:20px;
+    padding:20px; padding-bottom: calc(20px + env(safe-area-inset-bottom));
+    max-height:85vh; overflow-y:auto;
+  }
+  .sheet-title { font-weight:900; font-size:16px; margin-bottom:14px; display:flex; justify-content:space-between; align-items:center; }
+  .sheet-close { background:transparent; border:none; color:#fff; font-size:22px; cursor:pointer; }
+  .sheet textarea {
+    width:100%; min-height:80px; background:#1a1a1a; border:1px solid #333;
+    color:#fff; border-radius:12px; padding:12px; font-size:14px;
+    font-family:inherit; resize:none; outline:none;
+  }
+  .sheet input[type=file] { display:none; }
+  .upload-btn {
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    width:100%; padding:14px; margin-top:10px;
+    background:#1a1a1a; border:2px dashed #333; border-radius:12px;
+    color:#aaa; font-size:13.5px; cursor:pointer;
+  }
+  .upload-btn.has-image { background:#0d2818; border-color:#4caf50; color:#8bc34a; }
+  .toggle-row {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:12px 14px; margin-top:10px;
+    background:#1a1a1a; border-radius:12px; font-size:13.5px;
+  }
+  .toggle-row input { width:20px; height:20px; accent-color:#6a3093; }
+  .submit-btn {
+    width:100%; padding:15px; margin-top:14px;
+    background:#6a3093; border:none; color:#fff;
+    border-radius:12px; font-size:15px; font-weight:800; cursor:pointer;
+  }
+
+  .empty-state {
+    height: calc(100vh - 70px);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding:40px; text-align:center; gap:14px; scroll-snap-align: start;
+  }
+  .empty-state .eicon { font-size:60px; opacity:.4; }
+  .empty-state h2 { font-size:18px; font-weight:800; }
+  .empty-state p { font-size:13.5px; opacity:.65; line-height:1.6; }
+  .empty-state button {
+    margin-top:10px; padding:12px 24px; background:#6a3093;
+    border:none; color:#fff; border-radius:12px; font-weight:800; font-size:14px; cursor:pointer;
+  }
+
+  .toast {
+    position:fixed; bottom:90px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:#222; color:#fff; padding:10px 18px; border-radius:20px;
+    font-size:13px; font-weight:700; opacity:0;
+    transition: all .3s; pointer-events:none; z-index:300;
+  }
+  .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+  /* ─── AD SLOT (empty now, ready for AdMob) ─── */
+  .ad-slot {
+    height: 0;
+    overflow: hidden;
+    background: #0a0a0a;
+    text-align: center;
+    transition: height .3s;
+  }
+  .ad-slot.active { height: auto; padding: 12px; border-top: 1px solid #1a1a1a; border-bottom: 1px solid #1a1a1a; }
+  .ad-slot::before { content: ''; }
+</style>
+</head>
+<body>
+
+<div class="feed" id="feed"></div>
+
+<div class="nav">
+  <button class="nav-btn active" onclick="switchTab('home', event)">
+    <span class="ni">🏠</span><span>Home</span>
+  </button>
+  <button class="nav-btn" onclick="switchTab('search', event)">
+    <span class="ni">🔍</span><span>Search</span>
+  </button>
+  <button class="nav-btn create" onclick="openComposer()">
+    <span class="ni">+</span>
+  </button>
+  <button class="nav-btn" onclick="switchTab('inbox', event)">
+    <span class="ni">💬</span><span>Inbox</span>
+  </button>
+  <button class="nav-btn" onclick="switchTab('me', event)">
+    <span class="ni">👤</span><span>Me</span>
+  </button>
+</div>
+
+<div class="sheet" id="sheet" onclick="if(event.target===this)closeComposer()">
+  <div class="sheet-body">
+    <div class="sheet-title">
+      <span>New post on Gada</span>
+      <button class="sheet-close" onclick="closeComposer()">✕</button>
+    </div>
+    <textarea id="postText" placeholder="Say something..." maxlength="280"></textarea>
+    <label class="upload-btn" id="uploadBtn" for="fileInput">
+      <span>📷</span> <span id="uploadLabel">Tap to add photo</span>
+    </label>
+    <input type="file" id="fileInput" accept="image/*" onchange="handleImage(this)">
+
+    <!-- ADMIN-ONLY: Sponsored post toggle -->
+    <div class="toggle-row" id="sponsoredRow" style="display:none;">
+      <span>💰 Sponsored post (paid promotion)</span>
+      <input type="checkbox" id="sponsoredToggle">
+    </div>
+
+    <button class="submit-btn" onclick="submitPost()">Post</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── CONFIG ───
+var POSTS_KEY = 'gada_posts';
+var LIKES_KEY = 'gada_likes';
+var USER_KEY = 'gada_user';
+var ADMIN_KEY = 'gada_admin';
+var TIPS_KEY = 'gada_tips';
+var ADMIN_PASSWORD = 'gada2026';
+
+var pendingImage = null;
+
+// ─── STATE ───
+function getPosts(){ try { return JSON.parse(localStorage.getItem(POSTS_KEY) || '[]'); } catch(e){ return []; } }
+function savePosts(p){ localStorage.setItem(POSTS_KEY, JSON.stringify(p)); }
+function getLikes(){ try { return JSON.parse(localStorage.getItem(LIKES_KEY) || '{}'); } catch(e){ return {}; } }
+function saveLikes(l){ localStorage.setItem(LIKES_KEY, JSON.stringify(l)); }
+function getUser(){
+  try { return JSON.parse(localStorage.getItem(USER_KEY)) || { name:'You', verified:false, premium:false }; }
+  catch(e){ return { name:'You', verified:false, premium:false }; }
+}
+function saveUser(u){ localStorage.setItem(USER_KEY, JSON.stringify(u)); }
+function isAdmin(){ return localStorage.getItem(ADMIN_KEY) === '1'; }
+function getTips(){ try { return JSON.parse(localStorage.getItem(TIPS_KEY) || '{}'); } catch(e){ return {}; } }
+function saveTips(t){ localStorage.setItem(TIPS_KEY, JSON.stringify(t)); }
+
+// ─── RENDER ───
+function renderFeed(){
+  var feed = document.getElementById('feed');
+  var posts = getPosts();
+  var likes = getLikes();
+
+  if(!posts.length){
+    feed.innerHTML =
+      '<div class="empty-state">' +
+        '<div class="eicon">🎬</div>' +
+        '<h2>Welcome to Gada</h2>' +
+        '<p>Be the first to post.<br>Tap the + button below to start.</p>' +
+        '<button onclick="openComposer()">Create a post</button>' +
+      '</div>';
+    return;
+  }
+
+  feed.innerHTML = posts.map(function(p){
+    var liked = likes[p.id] ? 'liked' : '';
+    var likeCount = (p.likes || 0) + (likes[p.id] ? 1 : 0);
+    var bgStyle = p.image ? 'background-image:url(' + p.image + ');' : 'background:linear-gradient(135deg,#1a1a2e,#6a3093);';
+    var sponsoredTag = p.sponsored ? '<div class="sponsored-tag">Sponsored</div>' : '';
+    var verifiedBadge = p.verified ? ' verified' : '';
+
+    return '<div class="clip" data-post-id="' + p.id + '">' +
+      '<div class="clip-bg" style="' + bgStyle + '"></div>' +
+      '<div class="clip-actions">' +
+        '<div class="act ' + liked + '" onclick="toggleLike(\'' + p.id + '\')">' +
+          '<span class="ic">' + (likes[p.id] ? '❤️' : '🤍') + '</span>' +
+          '<span>' + likeCount + '</span>' +
+        '</div>' +
+        '<div class="act" onclick="showToast(\'Comments coming soon\')">' +
+          '<span class="ic">💬</span><span>' + ((p.comments || []).length) + '</span>' +
+        '</div>' +
+        '<div class="act tip" onclick="sendTip(\'' + p.id + '\')">' +
+          '<span class="ic">💵</span><span>Tip</span>' +
+        '</div>' +
+        '<div class="act" onclick="sharePost(\'' + p.id + '\')">' +
+          '<span class="ic">↗️</span><span>Share</span>' +
+        '</div>' +
+      '</div>' +
+      '<div class="clip-content">' +
+        '<div class="clip-user">' +
+          '<div class="clip-avatar' + verifiedBadge + '">' + escapeHtml(p.user.charAt(0).toUpperCase()) + '</div>' +
+          '<div>' +
+            '<div class="clip-name">' + escapeHtml(p.user) + '</div>' +
+            '<div style="font-size:11px; opacity:.7;">' + timeAgo(p.at) + '</div>' +
+          '</div>' +
+        '</div>' +
+        sponsoredTag +
+        '<div class="clip-text">' + escapeHtml(p.text) + '</div>' +
+        '<div class="clip-music">🎵 Original sound · ' + escapeHtml(p.user) + '</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="ad-slot" id="ad-' + p.id + '"></div>';
+  }).join('');
+}
+
+// ─── LIKES ───
+function toggleLike(id){
+  var likes = getLikes();
+  if(likes[id]) delete likes[id]; else likes[id] = true;
+  saveLikes(likes);
+  renderFeed();
+}
+
+// ─── TIPS (placeholder — wire to Telebirr/Chapa later) ───
+function sendTip(id){
+  if(!isSignedIn()) { showToast('Sign in to tip'); return; }
+  showToast('💵 Tipping coming soon');
+  // Later: open Telebirr payment modal
+}
+
+// ─── SHARE ───
+function sharePost(id){
+  var post = getPosts().find(function(p){ return p.id === id; });
+  if(!post) return;
+  if(navigator.share){
+    navigator.share({ title:'Gada', text: post.text }).catch(function(){});
+  } else {
+    navigator.clipboard.writeText(post.text);
+    showToast('Copied!');
+  }
+}
+
+// ─── COMPOSER ───
+function openComposer(){
+  document.getElementById('sheet').classList.add('open');
+  document.getElementById('postText').focus();
+  // Show sponsored toggle only for admin
+  document.getElementById('sponsoredRow').style.display = isAdmin() ? 'flex' : 'none';
+}
+function closeComposer(){
+  document.getElementById('sheet').classList.remove('open');
+  document.getElementById('postText').value = '';
+  document.getElementById('fileInput').value = '';
+  document.getElementById('sponsoredToggle').checked = false;
+  document.getElementById('uploadBtn').classList.remove('has-image');
+  document.getElementById('uploadLabel').textContent = 'Tap to add photo';
+  pendingImage = null;
+}
+
+function handleImage(input){
+  var f = input.files[0];
+  if(!f) return;
+  if(!f.type.startsWith('image/')){ showToast('Must be an image'); return; }
+  var reader = new FileReader();
+  reader.onload = function(e){
+    pendingImage = e.target.result;
+    document.getElementById('uploadBtn').classList.add('has-image');
+    document.getElementById('uploadLabel').textContent = '✅ ' + f.name;
+  };
+  reader.readAsDataURL(f);
+}
+
+function submitPost(){
+  var text = document.getElementById('postText').value.trim();
+  var sponsored = document.getElementById('sponsoredToggle').checked;
+  if(!text && !pendingImage){ showToast('Add text or image'); return; }
+
+  var u = getUser();
+  var posts = getPosts();
+  posts.unshift({
+    id: 'p_' + Date.now(),
+    user: u.name,
+    verified: u.verified || false,
+    premium: u.premium || false,
+    text: text,
+    image: pendingImage,
+    sponsored: sponsored,
+    at: Date.now(),
+    likes: 0,
+    tips: 0,
+    views: 0,
+    comments: []
+  });
+  savePosts(posts);
+  closeComposer();
+  renderFeed();
+  showToast(sponsored ? '💰 Sponsored post published' : 'Posted to Gada!');
+}
+
+// ─── NAV ───
+function switchTab(tab, ev){
+  document.querySelectorAll('.nav-btn').forEach(function(b){ b.classList.remove('active'); });
+  if(ev && ev.currentTarget) ev.currentTarget.classList.add('active');
+
+  if(tab === 'home') renderFeed();
+  else if(tab === 'search') showToast('Search coming soon');
+  else if(tab === 'inbox') showToast('Inbox coming soon');
+  else if(tab === 'me') showMe();
+}
+
+// ─── ME TAB ───
+function showMe(){
+  var u = getUser();
+  var feed = document.getElementById('feed');
+  feed.innerHTML =
+    '<div class="empty-state">' +
+      '<div class="clip-avatar' + (u.verified ? ' verified' : '') + '" style="width:80px; height:80px; font-size:32px;">' + escapeHtml(u.name.charAt(0).toUpperCase()) + '</div>' +
+      '<h2>' + escapeHtml(u.name) + '</h2>' +
+      '<p>' + (u.premium ? '⭐ Premium' : 'Free user') + '</p>' +
+      '<button onclick="adminLogin()">' + (isAdmin() ? '⚙️ Admin Panel' : '⚙️ Admin login') + '</button>' +
+      (isAdmin() ? '<button onclick="toggleVerified()" style="background:#1DA1F2;">' + (u.verified ? 'Remove Verified Badge' : 'Get Verified Badge (Admin)') + '</button>' : '') +
+      (isAdmin() ? '<button onclick="logoutAdmin()" style="background:#c62828;">Logout Admin</button>' : '') +
+    '</div>';
+}
+
+// ─── ADMIN ───
+function adminLogin(){
+  if(isAdmin()){
+    showAdminPanel();
+    return;
+  }
+  var pw = prompt('Admin password:');
+  if(pw === ADMIN_PASSWORD){
+    localStorage.setItem(ADMIN_KEY, '1');
+    showToast('Admin mode ON');
+    showMe();
+  } else if(pw !== null){
+    showToast('Wrong password');
+  }
+}
+function logoutAdmin(){
+  localStorage.removeItem(ADMIN_KEY);
+  showMe();
+}
+function showAdminPanel(){
+  var feed = document.getElementById('feed');
+  feed.innerHTML =
+    '<div class="empty-state">' +
+      '<div class="eicon">⚙️</div>' +
+      '<h2>Admin Panel</h2>' +
+      '<p>Manage Gada</p>' +
+      '<button onclick="toggleVerified()">Toggle Verified Badge</button>' +
+      '<button onclick="exportAll()">Export All Posts (JSON)</button>' +
+      '<button onclick="logoutAdmin()" style="background:#c62828;">Logout Admin</button>' +
+    '</div>';
+}
+function toggleVerified(){
+  var u = getUser();
+  u.verified = !u.verified;
+  saveUser(u);
+  showToast(u.verified ? '✓ Verified badge ON' : 'Verified badge OFF');
+  showMe();
+}
+function exportAll(){
+  var data = {
+    posts: getPosts(),
+    likes: getLikes(),
+    tips: getTips(),
+    exported: new Date().toISOString()
+  };
+  var str = JSON.stringify(data, null, 2);
+  navigator.clipboard.writeText(str);
+  showToast('Copied to clipboard');
+}
+
+// ─── HELPERS ───
+function escapeHtml(s){
+  return String(s||'').replace(/[&<>"']/g, function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+function timeAgo(ms){
+  var s = Math.floor((Date.now() - ms) / 1000);
+  if(s < 60) return s + 's ago';
+  if(s < 3600) return Math.floor(s/60) + 'm ago';
+  if(s < 86400) return Math.floor(s/3600) + 'h ago';
+  return Math.floor(s/86400) + 'd ago';
+}
+var toastTimer;
+function showToast(msg){
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ t.classList.remove('show'); }, 1800);
+}
+
+// ─── BOOT ───
+renderFeed();
+</script>
+</body>
+</html>
